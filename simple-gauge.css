@@ -1,0 +1,16 @@
+:host {
+	margin: 0 auto;
+	display: block;
+	-webkit-transform: rotate(270deg);
+	-ms-transform: rotate(270deg);
+	transform: rotate(270deg);
+}
+
+:host circle {
+	-webkit-animation-duration: 3s;
+	animation-duration: 3s;
+	-webkit-animation-timing-function: ease-in-out;
+	animation-timing-function: ease-in-out;
+  	animation-direction: forward;
+  	animation-fill-mode: forwards;
+}

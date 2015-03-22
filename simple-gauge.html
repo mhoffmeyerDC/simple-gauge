@@ -1,0 +1,114 @@
+<link rel="import" href="../polymer/polymer.html">
+
+<!--
+Radial Gauge
+
+##### Example
+
+    <simple-gauge complete="67" total="100" innerRadius="200" outerRadius="250" baseColor="#FF0000" overlayColor="#00FF00"></simple-gauge>
+
+@element simple-gauge
+@blurb Simple, SVG animated radial gauge Polymer component with no other external dependencies... other than Polymer.
+@status alpha
+@homepage http://mhoffmeyerDC.github.io/simple-gauge
+-->
+<polymer-element name="simple-gauge" attributes="complete total innerRadius outerRadius baseColor overlayColor">
+  <template>
+    <link rel="stylesheet" href="simple-gauge.css">
+    <figure class="ringChart">
+      <svg
+        width="{{diameter}}"
+        height="{{diameter}}"
+        xmlns="http://www.w3.org/2000/svg"
+        class="chart-container">
+        <template repeat="{{gauge, idx in gauges}}">
+          <circle
+            class="{{'overlay_circle' + idx}}"
+            fill="none"
+            cx="{{diameter/2}}"
+            cy="{{diameter/2}}"
+            r="{{gauge.actualRadius}}"
+            stroke-width="{{gauge.strokeWidth}}"
+            stroke="{{gauge.overlayColor}}"
+          />
+        </circle>
+      </svg>
+    </figure>
+  </template>
+  <script>
+    Polymer({
+      gauge: function(innerRadius, outerRadius, overlayColor, complete, total) {
+        var gaugeObj = {
+          innerRadius: innerRadius,
+          outerRadius: outerRadius,
+          overlayColor: overlayColor,
+          strokeWidth: Math.floor(outerRadius - innerRadius),
+          diameter: Math.floor(2*outerRadius)
+        };
+
+        gaugeObj.actualRadius = Math.floor((gaugeObj.strokeWidth / 2) + innerRadius);
+        gaugeObj.circumference = Math.ceil(2*Math.PI*gaugeObj.actualRadius);
+        gaugeObj.pieceCircumference = Math.ceil(((total-complete)/total) * gaugeObj.circumference);
+
+        return gaugeObj;
+      },
+      gauges: [],
+      created: function() {
+          this.complete = [];
+          this.overlayColor = [];
+          this.innerRadius = [];
+          this.outerRadius = [];
+      },
+      ready: function () {
+        this.total = parseInt(this.total, 10);
+          this.calcGeometry();
+      },
+      calcGeometry: function() {
+        var sorted = this.complete;//.sort().reverse();
+        var maxRadii = 0;
+
+        for(var i=0; i<sorted.length;i++) {
+          var gauge = new this.gauge(this.innerRadius[i], this.outerRadius[i], this.overlayColor[i], sorted[i], this.total);
+          
+          //Don't animate the 100% piece
+          if(sorted[i] !== this.total) {
+            this.createAnimation(gauge.circumference, gauge.pieceCircumference, i);
+          }
+
+          if(maxRadii < gauge.outerRadius) {
+            maxRadii = gauge.outerRadius;
+          }
+
+          this.gauges.push(gauge);
+        }
+        this.diameter = maxRadii*2;
+      },
+      createAnimation: function(circumference, pieceCircumference, index) {
+        var cssAnimation = document.createElement('style');
+        cssAnimation.type = 'text/css';
+        var rules = ':host .overlay_circle' + index + ' { -webkit-animation-name: pie' + index +'; animation-name: pie' + index +'; stroke-dashoffset: ' + pieceCircumference + ';stroke-dasharray: ' + circumference + ';}' + 
+          '@-webkit-keyframes pie' + index + ' {'+
+          '0% {  stroke-dashoffset: ' + circumference + ' }'+
+          '100% {  stroke-dashoffset: ' + pieceCircumference + ' }'+
+          '@keyframes pie' + index + ' {'+
+          '0% {  stroke-dashoffset: ' + circumference + ' }'+
+          '100% {  stroke-dashoffset: ' + pieceCircumference + ' }'+
+        '}';
+
+        this.appendStyle(rules);
+      },
+      appendStyle: function(css) {
+        var style = document.createElement('style');
+        style.type = 'text/css';
+        if (style.styleSheet){
+          style.styleSheet.cssText = css;
+        } else {
+          style.appendChild(document.createTextNode(css));
+        }
+        this.shadowRoot.appendChild(style);
+
+        //this.element.convertSheetsToStyles(this.shadowRoot);
+      }
+    });
+  </script>
+</polymer-element>
